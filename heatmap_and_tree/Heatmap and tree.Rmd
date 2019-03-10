@@ -10,30 +10,58 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Displaying genetic distances in a heatmap and relatedness in a phylogenetic tree
-
+<br>
 Load some packages
-
-```{r}
+<br>
+```{r warning=FALSE, message=FALSE}
 library(ape)
 library(reshape2)
 library(dplyr)
 library(plotly)
 library(RColorBrewer)
 ```
-
+<br>
 Read in the multiple sequence alingment file
-
+<br>
 ```{r}
 # Read in the alingment file
 aln <- read.dna('example.aln', format = 'fasta')
 # Calculate the genetic distances between sequences using the K80 model, as.mattrix makes the rest easier
 alnDist <- dist.dna(aln, model = "K80", as.matrix = TRUE)
 
+
+```
+<br>
+
+### Reduction of heatmap to focus on the important data
+
+The pipeline mentioned, uses the Basic Local Alignment Search Tool (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
+<br>
+
+The data we have, is ready to use for heatmap plotting purposes, but since the data we have here also contains previously sample sequences, comparing those sequences amongst themselfs would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
+<br><br>
+
+![Lots of destracting data](heatmap_full.png)
+
+<br><br>
+
+From the image above you can see that, typical of a heatmap, it is symetrical on the diagonal vertice.  We are showing submitted *vs* retrieved samples in both the horisontal and vertical direction.  Notice also, as annotated as "Distractio", are the previous samples compared amongst themselfs.  We are not interested in those sample now as we would allready have acted on any issues then.  What we rather want, is a heatmap as depicted in the image below.
+
+<br><br>
+
+![Data deserving our attention](heatmap_focused.png)
+
+<br><br>
+
+Luckily for us, we have a very powerful tool to our desposal, **R**, and plenty of really usefull and convenient packages, like dplyr.
+
+<br><br>
+```{r}
 # Remove some redundant data
 # Wide to long
 alnDistLong <- melt(alnDist)
 
-# We ar enot interested in samples compared to itself
+# We are not interested in samples compared to itself
 alnDistLong$sameSample <- alnDistLong$Var1 == alnDistLong$Var2
 # If the samples hav the same name the above will set 'sameSample' to TRUE, we keep only FALSE
 alnDistLong <- subset(alnDistLong, sameSample %in% FALSE)
@@ -44,8 +72,9 @@ colnames(alnDistLong) <- c('sample1', 'sample2', 'distance')
 head(alnDistLong)
 ```
 
-
-
+<br>
+Create a new variable, combined, we will paste the names for sample1 and sample2 together
+<br>
 ```{r}
 # Create a new variable, combined, we will paste the names for sample1 and sample2 together
 # We are still removing redundant data, the distance between sample1 and sample2 is the same
@@ -67,9 +96,9 @@ alnDistDedup <- alnDistDedup[order(alnDistDedup$distance),]
 
 #alnDist <- data.frame(alnDist,check.names = FALSE) #new
 ```
-
-
-
+<br>
+Final cleanup and removal of destracting data
+<br>
 ```{r}
 # get the names of samples originally in the fasta file used for submission
 qSample <- names(read.dna("example.fasta", format = "fasta"))
@@ -98,8 +127,9 @@ focus.df <- focus.df %>%
 rm(alnDist, alnDistDedup, alnDistLong, anno.df, aln, q, qSample, rowNames, tmp)
 
 ```
-
-
+<br>
+Plot the heatmap using plotly for inteactivity
+<br>
 ```{r, fig.width=10, fig.height=6}
 p <- plot_ly(x = focus.df$sample2,
              y = focus.df$sample1,
@@ -112,6 +142,14 @@ p <- plot_ly(x = focus.df$sample2,
 
 p
 ```
+
+
+<br><br>
+
+## Phylogenetic tree
+
+Above we have used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap.  Another way of looking at our alingment data is to use phylogenetic inference.
+
 
 
 
