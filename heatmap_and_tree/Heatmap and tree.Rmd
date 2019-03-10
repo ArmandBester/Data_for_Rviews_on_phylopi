@@ -1,0 +1,131 @@
+---
+title: "Heatmap and tree"
+author: "Armand"
+date: "09 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Displaying genetic distances in a heatmap and relatedness in a phylogenetic tree
+
+Load some packages
+
+```{r}
+library(ape)
+library(reshape2)
+library(dplyr)
+library(plotly)
+library(RColorBrewer)
+```
+
+Read iin the multiple sequence alingment file
+
+```{r}
+# Read in the alingment file
+aln <- read.dna('example.aln', format = 'fasta')
+# Calculate the genetic distances between sequences using the K80 model, as.mattrix makes the rest easier
+alnDist <- dist.dna(aln, model = "K80", as.matrix = TRUE)
+
+# Remove some redundant data
+# Wide to long
+alnDistLong <- melt(alnDist)
+
+# We ar enot interested in samples compared to itself
+alnDistLong$sameSample <- alnDistLong$Var1 == alnDistLong$Var2
+# If the samples hav the same name the above will set 'sameSample' to TRUE, we keep only FALSE
+alnDistLong <- subset(alnDistLong, sameSample %in% FALSE)
+# We are done with the 'sameSample' column, so remove it
+alnDistLong <- alnDistLong[,-4]
+colnames(alnDistLong) <- c('sample1', 'sample2', 'distance')
+
+head(alnDistLong)
+
+
+
+
+
+```
+
+
+
+```{r}
+# Create a new variable, combined, we will paste the names for sample1 and sample2 together
+# We are still removing redundant data, the distance between sample1 and sample2 is the same
+# as the distance between sample2 and sample1
+alnDistLong$combined <- paste(alnDistLong$sample1, alnDistLong$sample2, sep = ",")
+
+# Sort this such that 'sample2name,sample1name' becomes 'sample1name,sample2name' or wise versa, but they wil now be identical
+alnDistLong$sorted <- apply(alnDistLong,
+                            1,
+                            function(x) {paste(sort(unlist(strsplit(x[4], split=","))), collapse = ",")})
+
+# Now it is easy to remove the duplicates
+alnDistDedup <- alnDistLong[!duplicated(alnDistLong$sorted),]
+# remove these columns
+alnDistDedup <- alnDistDedup[, c(-4,-5)]
+
+# Order by distance
+alnDistDedup <- alnDistDedup[order(alnDistDedup$distance),]
+
+alnDist <- data.frame(alnDist,check.names = FALSE) #new
+```
+
+
+
+```{r}
+# get the names of samples originally in the fasta file used for submission
+qSample <- names(read.dna("example.fasta", format = "fasta"))
+
+# get a list of row and column names
+rowNames <- rownames(alnDist)
+colNames <- colnames(alnDist)
+
+
+# t <- list(
+#   family = "sans serif",
+#   size = 10,
+#   color = toRGB("black"))
+
+
+anno.df <- data.frame(q = character(),
+                      rowNames = character())
+
+for (q in qSample){
+  tmp <- cbind(q, rowNames)
+  anno.df <- rbind(anno.df, tmp)
+}
+
+focus.df <- alnDistLong
+focus.df$prim <- focus.df$sample1 %in% qSample
+
+focus.df <- focus.df %>% 
+  filter(prim == TRUE | sample1 == sample2)
+
+
+```
+
+
+```{r, fig.width=12, fig.height=8}
+p <- plot_ly(x = focus.df$sample2,
+             y = focus.df$sample1,
+             z = focus.df$distance,
+             type = "heatmap", colors = brewer.pal(11, "RdYlGn"), 
+             zmin = 0.0, zmax = 0.03,  xgap = 2, ygap = 1) %>% 
+  layout(margin = list(l = 100, r = 10, b = 100, t = 10, pad = 4), 
+         yaxis = list(tickfont = list(size = 10), showspikes = TRUE),
+         xaxis = list(tickfont = list(size = 10), showspikes = TRUE))
+
+p
+```
+
+
+
+
+
+
+
+
+
