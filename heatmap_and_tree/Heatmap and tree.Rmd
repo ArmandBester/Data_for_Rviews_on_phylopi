@@ -1,5 +1,5 @@
 ---
-title: "Heatmap and tree"
+title: "heatmap and tree"
 author: "Armand"
 date: "09 March 2019"
 output: html_document
@@ -22,7 +22,7 @@ library(plotly)
 library(RColorBrewer)
 ```
 
-Read in the multiple sequence alingment file
+Read in the multiple sequence alignment file
 
 ```{r}
 # Read in the alignment file
@@ -37,17 +37,17 @@ alnDist <- dist.dna(aln, model = "K80", as.matrix = TRUE)
 
 ### Reduction of heatmap to focus on the important data
 
-The pipeline mentioned, uses the Basic Local Alignment Search Tool (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
+The pipeline mentioned uses the **Basic Local Alignment Search Tool** (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
 
 
-The data we have, is ready to use for heatmap plotting purposes, but since the data we have here also contains previously sample sequences, comparing those sequences amongst themselfs would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
+The data we have is ready to use for heatmap plotting purposes, but since the data also contains previously samples sequences, comparing those sequences amongst themselves would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
 
 
 ![Lots of destracting data](heatmap_full.png)
 
 
 
-From the image above you can see that, typical of a heatmap, it is symetrical on the diagonal vertice.  We are showing submitted *vs* retrieved samples in both the horisontal and vertical direction.  Notice also, as annotated as "Distractio", are the previous samples compared amongst themselfs.  We are not interested in those sample now as we would allready have acted on any issues then.  What we rather want, is a heatmap as depicted in the image below.
+From the image above you can see that, typical of a heatmap, it is symmetrical on the diagonal.  We show submitted *vs* retrieved samples in both the horizontal and vertical direction.  Notice also, as annotated as "Distraction", are the previous samples compared amongst themselves.  We are not interested in those sample now as we would already have acted on any issues then.  What we want instead, is a heatmap as depicted in the image below.
 
 
 
@@ -55,7 +55,7 @@ From the image above you can see that, typical of a heatmap, it is symetrical on
 
 
 
-Luckily for us, we have a very powerful tool to our desposal, **R**, and plenty of really usefull and convenient packages, like dplyr.
+Luckily for us, we have a very powerful tool to our disposal, **R**, and plenty of really useful and convenient packages, like `dplyr`.
 
 
 
@@ -69,16 +69,15 @@ alnDistLong <-
   gather(key = "sample_2", value = "distance", -sample_1, na.rm = TRUE) %>% 
   arrange(distance)
 
-alnDistLong
 ```
 
 
 
 
-Create a new variable, combined, we will paste the names for sample1 and sample2 together
+Create a new variable, combined, we will paste the names for `sample_1` and `sample_2` together
 
 
-Final cleanup and removal of destracting data
+Final cleanup and removal of distracting data
 
 ```{r}
 # get the names of samples originally in the fasta file used for submission
@@ -96,7 +95,7 @@ focus.df <-
 
 ```
 
-Plot the heatmap using plotly for inteactivity
+Plot the heatmap using `plotly` for interactivity
 
 ```{r, fig.width=10, fig.height=6}
 focus.df %>% 
@@ -119,9 +118,11 @@ focus.df %>%
 
 ## Phylogenetic tree
 
-Above we have used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap.  Another way of looking at our alingment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
+Above we used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap. 
 
-```{r, fig.height=12, fig.width=7}
+Another way of looking at our alignment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
+
+```{r, fig.height=12, fig.width=12}
 tree <- read.tree("example-tree.txt")
 
 plot.phylo(
