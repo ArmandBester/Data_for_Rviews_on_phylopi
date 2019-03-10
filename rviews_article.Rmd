@@ -1,0 +1,52 @@
+---
+title: 'A pipeline for detecting HIV / AIDS in rural populations'
+author: Philip Bester and Andrie de Vries
+date: '2019-03-06'
+slug: aids-hiv-detection
+categories:
+  - R Language
+  - Guest Post
+  - R in Medicine
+tags: [Medicine, R/Medicine, HIV/AIDS]
+summary: 'How we created an affordable pipeline with Python and R running on a Raspberry Pi to detect HIV/AIDS in rural populations in South Africa'
+
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE)
+
+# ensure packages are installed
+lapply(c('tibble'), function(x) {
+  if (!requireNamespace(x)) install.packages(x)
+})
+
+library(tibble)
+```   
+
+
+
+
+It is because I am not a graph analysis expert that I thought it important to write this article. For someone who thinks in terms of single rectangular data sets, it is a bit of a mental leap to understand how to apply *tidy* principles to a more robust object, such as a graph table.  Thankfully, there are two packages that make this work much easier:
+
+- [`tidygraph`](https://github.com/thomasp85/tidygraph) - Provides a way for `dplyr` to interact with graphs
+
+- [`ggraph`](https://github.com/thomasp85/ggraph) - Extension to `ggplot2` for graph analysis
+
+## Introduction
+
+Recently research regarding the use of a Raspberry Pi, python, R and various other software was published in PloS ONE.  The authors describe how they used this cheap hardware to create a phylogenetic pipeline tailored for the HIV drug resistance testing facility.  As with antibiotics, the human immunodeficiency virus can develop resistance to the life saving anti-retroviral (ARV) drugs.  In an extend, this was dramaticized in the movie, Dallas Buyers Club.  Luckily, nowadays, the health care professionals have more ARVs to choose from and it is very valuable for clinicians treating HIV infected patients to know which drugs will be able to suppress viral replication.  The routine way of accomplishing this, is to sequence specific areas of the HIV genome which was isolated from the patient.  Analysis of this sequence data is used to detect mutations which convey resistance to specific drugs.  HIV has a very high mutation rate, which is the mechanism for developing drug resistance, but this is also used to our advantage in the drug resistance testing facility.  During extraction of nucleic acid from the patient sample, the viral RNA is isolated via reverse transcription and polymerase chain reaction.  This isolated and amplified nucleic acid, can then be subjected to Sanger sequencing or other sequencing methods.  The polymerase chain reaction is very sensitive to contamination of other non-subject nucleic product, which means that cross contamination can create an erroneous result.  The process is also very labour intensive and people can make mistakes, like sample swaps.  For these reasons, it is common practise to do phylogenetic analysis on sequence results to detect any anomalies.  
+
+The researchers developed a portable selfcontained and affordable solution to this problem.  This pipeline can detect previously sampled sequences out of a self maintaining database to include in the analysis which is displayed as a phylogenetic tree and a heatmap of genetic distances using R packages.  Before getting to that, it would be very useful to know how to colour a heatmap to best draw attention to very similar viral sequences which can be further investigated.  The authors used publicly available sequences from the Los Alamos HIV sequence database.  For subtypes B and C, using unique patient identifiers from the database, the sequences data was split into one file containing just one sequence per patient (to analyse type inter) and multiple files per patient, for patients with more than one sequence (to analyse type intra).  The inter type files were aligned as a whole using MAFFT and each of the type intra files where aligned similarly, but individually.  This allowed us to calculate the genetic distances of viral sequences between patients and within patients, thus, type inter and type intra.
+
+## Heatmap
+
+Provide a link to alignment data to use for the heatmap.
+Go through the steps
+
+## Alignment
+
+Provide a link to alignment data to use in the logistic regression
+Go through the steps
+
+
+
