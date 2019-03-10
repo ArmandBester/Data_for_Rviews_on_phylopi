@@ -21,7 +21,7 @@ library(plotly)
 library(RColorBrewer)
 ```
 
-Read iin the multiple sequence alingment file
+Read in the multiple sequence alingment file
 
 ```{r}
 # Read in the alingment file
@@ -42,11 +42,6 @@ alnDistLong <- alnDistLong[,-4]
 colnames(alnDistLong) <- c('sample1', 'sample2', 'distance')
 
 head(alnDistLong)
-
-
-
-
-
 ```
 
 
@@ -70,7 +65,7 @@ alnDistDedup <- alnDistDedup[, c(-4,-5)]
 # Order by distance
 alnDistDedup <- alnDistDedup[order(alnDistDedup$distance),]
 
-alnDist <- data.frame(alnDist,check.names = FALSE) #new
+#alnDist <- data.frame(alnDist,check.names = FALSE) #new
 ```
 
 
@@ -79,36 +74,33 @@ alnDist <- data.frame(alnDist,check.names = FALSE) #new
 # get the names of samples originally in the fasta file used for submission
 qSample <- names(read.dna("example.fasta", format = "fasta"))
 
-# get a list of row and column names
+# get a list of row
 rowNames <- rownames(alnDist)
-colNames <- colnames(alnDist)
 
-
-# t <- list(
-#   family = "sans serif",
-#   size = 10,
-#   color = toRGB("black"))
-
-
+# Create an annotated dataframe from the query samples and rownames
+# Initialize an empty df to populate
 anno.df <- data.frame(q = character(),
                       rowNames = character())
-
 for (q in qSample){
   tmp <- cbind(q, rowNames)
   anno.df <- rbind(anno.df, tmp)
 }
 
+
+# Create a dataframe with the important distances only
 focus.df <- alnDistLong
 focus.df$prim <- focus.df$sample1 %in% qSample
 
 focus.df <- focus.df %>% 
   filter(prim == TRUE | sample1 == sample2)
 
+# clean a bit
+rm(alnDist, alnDistDedup, alnDistLong, anno.df, aln, q, qSample, rowNames, tmp)
 
 ```
 
 
-```{r, fig.width=12, fig.height=8}
+```{r, fig.width=10, fig.height=6}
 p <- plot_ly(x = focus.df$sample2,
              y = focus.df$sample1,
              z = focus.df$distance,
@@ -123,7 +115,7 @@ p
 
 
 
-
+<br><br><br><br>
 
 
 
