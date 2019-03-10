@@ -148,12 +148,19 @@ p
 
 ## Phylogenetic tree
 
-Above we have used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap.  Another way of looking at our alingment data is to use phylogenetic inference.
+Above we have used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap.  Another way of looking at our alingment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
 
+```{r, fig.height=12, fig.width=7}
+tree <- read.tree("example-tree.txt")
 
+plot.phylo(tree, cex=0.8, use.edge.length = TRUE, tip.color = 'blue', align.tip.label = TRUE, show.node.label = TRUE)
+
+```
 
 
 <br><br><br><br>
+
+
 
 
 
