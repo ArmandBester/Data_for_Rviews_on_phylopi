@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Load some packages
 
-```{r warning=FALSE, message=FALSE}
+```{r init, warning=FALSE, message=FALSE}
 library(ape)
 library(tibble)
 library(tidyr)
@@ -24,7 +24,7 @@ library(RColorBrewer)
 
 Read in the multiple sequence alignment file
 
-```{r}
+```{r read_dna}
 # Read in the alignment file
 aln <- read.dna('example.aln', format = 'fasta')
 
@@ -43,7 +43,7 @@ The pipeline mentioned uses the **Basic Local Alignment Search Tool** (BLAST) to
 The data we have is ready to use for heatmap plotting purposes, but since the data also contains previously samples sequences, comparing those sequences amongst themselves would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
 
 
-![Lots of destracting data](heatmap_full.png)
+![Lots of distracting data](heatmap_full.png)
 
 
 
@@ -59,12 +59,10 @@ Luckily for us, we have a very powerful tool to our disposal, **R**, and plenty 
 
 
 
-```{r}
-# alnDist[upper.tri(alnDist, diag = FALSE)] <- NA
-
+```{r gather}
 alnDistLong <- 
   alnDist %>% 
-  as.data.frame() %>% 
+  as.data.frame(stringsToFactors = FALSE) %>% 
   rownames_to_column(var = "sample_1") %>% 
   gather(key = "sample_2", value = "distance", -sample_1, na.rm = TRUE) %>% 
   arrange(distance)
@@ -79,31 +77,31 @@ Create a new variable, combined, we will paste the names for `sample_1` and `sam
 
 Final cleanup and removal of distracting data
 
-```{r}
+```{r compare_with_new_data}
 # get the names of samples originally in the fasta file used for submission
 qSample <- names(read.dna("example.fasta", format = "fasta"))
 
-
-
-focus.df <- 
-  alnDistLong %>% 
-  filter(
-    sample_1 %in% qSample,
-    sample_1 != sample_2
-    )
-
-
+# compute new order of samples, so the new alignment is in the order of the heatmap example
+sample_1 <- unique(alnDistLong$sample_1)
+new_order <- c(sort(qSample), setdiff(sample_1, qSample))
 ```
 
 Plot the heatmap using `plotly` for interactivity
 
-```{r, fig.width=10, fig.height=6}
-focus.df %>% 
+```{r plot_heatmap}
+alnDistLong %>% 
+  filter(
+    sample_1 %in% qSample,
+    sample_1 != sample_2
+    ) %>% 
+  mutate(
+    sample_2 = factor(sample_2, levels = new_order)
+  ) %>% 
   plot_ly(
     x = ~sample_2,
     y = ~sample_1,
     z = ~distance,
-    type = "heatmap", colors = brewer.pal(11, "RdYlGn"), 
+    type = "heatmap", colors = brewer.pal(11, "RdYlBu"), 
     zmin = 0.0, zmax = 0.03,  xgap = 2, ygap = 1
 ) %>% 
   layout(
@@ -122,7 +120,7 @@ Above we used the package [Ape](http://ape-package.ird.fr/) to calculate the gen
 
 Another way of looking at our alignment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
 
-```{r, fig.height=12, fig.width=12}
+```{r plot_phylo_tree}
 tree <- read.tree("example-tree.txt")
 
 plot.phylo(
