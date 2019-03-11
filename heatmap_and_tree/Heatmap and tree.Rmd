@@ -120,22 +120,26 @@ Above we used the package [Ape](http://ape-package.ird.fr/) to calculate the gen
 
 Another way of looking at our alignment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
 
-```{r plot_phylo_tree}
+```{r, fig.height=12, fig.width=12}
 tree <- read.tree("example-tree.txt")
 
 plot.phylo(
   tree, cex = 0.8, 
   use.edge.length = TRUE, 
   tip.color = 'blue', 
-  align.tip.label = TRUE, 
+  align.tip.label = FALSE, 
   show.node.label = TRUE
 )
+nodelabels("This one", 9, frame = "r", bg = "red", adj = c(-8.2,-46))
+
+
 
 ```
 
 
+We have highlighted a node with a red block, whith the text "This one" which we can now discuss.  We have three leaves in this node, KM050043, KM050042, KM050041 and if you would look up these accession numbers at [NCBI](https://www.ncbi.nlm.nih.gov/nuccore/KM050041.1/) you will notice the Title of the paper it is tied to:
 
-
+"HIV transmission. Selection bias at the heterosexual HIV-1 transmission bottleneck"
 
 
 
