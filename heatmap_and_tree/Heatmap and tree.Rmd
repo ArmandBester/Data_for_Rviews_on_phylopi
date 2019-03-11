@@ -1,5 +1,5 @@
 ---
-title: "Heatmap and tree"
+title: "heatmap and tree"
 author: "Armand"
 date: "09 March 2019"
 output: html_document
@@ -10,155 +10,133 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Displaying genetic distances in a heatmap and relatedness in a phylogenetic tree
-<br>
+
 Load some packages
-<br>
+
 ```{r warning=FALSE, message=FALSE}
 library(ape)
-library(reshape2)
+library(tibble)
+library(tidyr)
 library(dplyr)
 library(plotly)
 library(RColorBrewer)
 ```
-<br>
-Read in the multiple sequence alingment file
-<br>
+
+Read in the multiple sequence alignment file
+
 ```{r}
-# Read in the alingment file
+# Read in the alignment file
 aln <- read.dna('example.aln', format = 'fasta')
+
 # Calculate the genetic distances between sequences using the K80 model, as.mattrix makes the rest easier
 alnDist <- dist.dna(aln, model = "K80", as.matrix = TRUE)
-
-
 ```
-<br>
+
+
+
 
 ### Reduction of heatmap to focus on the important data
 
-The pipeline mentioned, uses the Basic Local Alignment Search Tool (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
-<br>
+The pipeline mentioned uses the **Basic Local Alignment Search Tool** (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
 
-The data we have, is ready to use for heatmap plotting purposes, but since the data we have here also contains previously sample sequences, comparing those sequences amongst themselfs would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
-<br><br>
+
+The data we have is ready to use for heatmap plotting purposes, but since the data also contains previously samples sequences, comparing those sequences amongst themselves would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
+
 
 ![Lots of destracting data](heatmap_full.png)
 
-<br><br>
 
-From the image above you can see that, typical of a heatmap, it is symetrical on the diagonal vertice.  We are showing submitted *vs* retrieved samples in both the horisontal and vertical direction.  Notice also, as annotated as "Distractio", are the previous samples compared amongst themselfs.  We are not interested in those sample now as we would allready have acted on any issues then.  What we rather want, is a heatmap as depicted in the image below.
 
-<br><br>
+From the image above you can see that, typical of a heatmap, it is symmetrical on the diagonal.  We show submitted *vs* retrieved samples in both the horizontal and vertical direction.  Notice also, as annotated as "Distraction", are the previous samples compared amongst themselves.  We are not interested in those sample now as we would already have acted on any issues then.  What we want instead, is a heatmap as depicted in the image below.
+
+
 
 ![Data deserving our attention](heatmap_focused.png)
 
-<br><br>
 
-Luckily for us, we have a very powerful tool to our desposal, **R**, and plenty of really usefull and convenient packages, like dplyr.
 
-<br><br>
+Luckily for us, we have a very powerful tool to our disposal, **R**, and plenty of really useful and convenient packages, like `dplyr`.
+
+
+
 ```{r}
-# Remove some redundant data
-# Wide to long
-alnDistLong <- melt(alnDist)
+# alnDist[upper.tri(alnDist, diag = FALSE)] <- NA
 
-# We are not interested in samples compared to itself
-alnDistLong$sameSample <- alnDistLong$Var1 == alnDistLong$Var2
-# If the samples hav the same name the above will set 'sameSample' to TRUE, we keep only FALSE
-alnDistLong <- subset(alnDistLong, sameSample %in% FALSE)
-# We are done with the 'sameSample' column, so remove it
-alnDistLong <- alnDistLong[,-4]
-colnames(alnDistLong) <- c('sample1', 'sample2', 'distance')
+alnDistLong <- 
+  alnDist %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "sample_1") %>% 
+  gather(key = "sample_2", value = "distance", -sample_1, na.rm = TRUE) %>% 
+  arrange(distance)
 
-head(alnDistLong)
 ```
 
-<br>
-Create a new variable, combined, we will paste the names for sample1 and sample2 together
-<br>
-```{r}
-# Create a new variable, combined, we will paste the names for sample1 and sample2 together
-# We are still removing redundant data, the distance between sample1 and sample2 is the same
-# as the distance between sample2 and sample1
-alnDistLong$combined <- paste(alnDistLong$sample1, alnDistLong$sample2, sep = ",")
 
-# Sort this such that 'sample2name,sample1name' becomes 'sample1name,sample2name' or wise versa, but they wil now be identical
-alnDistLong$sorted <- apply(alnDistLong,
-                            1,
-                            function(x) {paste(sort(unlist(strsplit(x[4], split=","))), collapse = ",")})
 
-# Now it is easy to remove the duplicates
-alnDistDedup <- alnDistLong[!duplicated(alnDistLong$sorted),]
-# remove these columns
-alnDistDedup <- alnDistDedup[, c(-4,-5)]
 
-# Order by distance
-alnDistDedup <- alnDistDedup[order(alnDistDedup$distance),]
+Create a new variable, combined, we will paste the names for `sample_1` and `sample_2` together
 
-#alnDist <- data.frame(alnDist,check.names = FALSE) #new
-```
-<br>
-Final cleanup and removal of destracting data
-<br>
+
+Final cleanup and removal of distracting data
+
 ```{r}
 # get the names of samples originally in the fasta file used for submission
 qSample <- names(read.dna("example.fasta", format = "fasta"))
 
-# get a list of row
-rowNames <- rownames(alnDist)
-
-# Create an annotated dataframe from the query samples and rownames
-# Initialize an empty df to populate
-anno.df <- data.frame(q = character(),
-                      rowNames = character())
-for (q in qSample){
-  tmp <- cbind(q, rowNames)
-  anno.df <- rbind(anno.df, tmp)
-}
 
 
-# Create a dataframe with the important distances only
-focus.df <- alnDistLong
-focus.df$prim <- focus.df$sample1 %in% qSample
+focus.df <- 
+  alnDistLong %>% 
+  filter(
+    sample_1 %in% qSample,
+    sample_1 != sample_2
+    )
 
-focus.df <- focus.df %>% 
-  filter(prim == TRUE | sample1 == sample2)
-
-# clean a bit
-rm(alnDist, alnDistDedup, alnDistLong, anno.df, aln, q, qSample, rowNames, tmp)
 
 ```
-<br>
-Plot the heatmap using plotly for inteactivity
-<br>
+
+Plot the heatmap using `plotly` for interactivity
+
 ```{r, fig.width=10, fig.height=6}
-p <- plot_ly(x = focus.df$sample2,
-             y = focus.df$sample1,
-             z = focus.df$distance,
-             type = "heatmap", colors = brewer.pal(11, "RdYlGn"), 
-             zmin = 0.0, zmax = 0.03,  xgap = 2, ygap = 1) %>% 
-  layout(margin = list(l = 100, r = 10, b = 100, t = 10, pad = 4), 
-         yaxis = list(tickfont = list(size = 10), showspikes = TRUE),
-         xaxis = list(tickfont = list(size = 10), showspikes = TRUE))
-
-p
+focus.df %>% 
+  plot_ly(
+    x = ~sample_2,
+    y = ~sample_1,
+    z = ~distance,
+    type = "heatmap", colors = brewer.pal(11, "RdYlGn"), 
+    zmin = 0.0, zmax = 0.03,  xgap = 2, ygap = 1
+) %>% 
+  layout(
+    margin = list(l = 100, r = 10, b = 100, t = 10, pad = 4), 
+    yaxis = list(tickfont = list(size = 10), showspikes = TRUE),
+    xaxis = list(tickfont = list(size = 10), showspikes = TRUE)
+  )
 ```
 
 
-<br><br>
+
 
 ## Phylogenetic tree
 
-Above we have used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap.  Another way of looking at our alingment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
+Above we used the package [Ape](http://ape-package.ird.fr/) to calculate the genetic distances for the heatmap. 
 
-```{r, fig.height=12, fig.width=7}
+Another way of looking at our alignment data is to use phylogenetic inference. The PhyloPi pipeline saves each step of phylogenetic inference to allow the user to intercept at any step.  We can use the newick tree file (a text file formatted as newick) and draw our own tree.
+
+```{r, fig.height=12, fig.width=12}
 tree <- read.tree("example-tree.txt")
 
-plot.phylo(tree, cex=0.8, use.edge.length = TRUE, tip.color = 'blue', align.tip.label = TRUE, show.node.label = TRUE)
+plot.phylo(
+  tree, cex = 0.8, 
+  use.edge.length = TRUE, 
+  tip.color = 'blue', 
+  align.tip.label = TRUE, 
+  show.node.label = TRUE
+)
 
 ```
 
 
-<br><br><br><br>
+
 
 
 
