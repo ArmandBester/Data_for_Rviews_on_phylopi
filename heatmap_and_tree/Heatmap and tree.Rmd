@@ -40,14 +40,14 @@ alnDist <- dist.dna(aln, model = "K80", as.matrix = TRUE)
 The pipeline mentioned uses the **Basic Local Alignment Search Tool** (BLAST) to retrieve previously sampled sequences and adds these retrieved sequences to the analysis.  [BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi) is like a search engine you use on the web, but for protein or DNA sequences.  By doing this important sequences from retrospective samples are included which enables PhyloPi to be aware of past sequences and not just batch per batch aware.  Have a look at the [paper](https://journals.plos.org/plosone/article/comments?id=10.1371/journal.pone.0213241) for some examples.
 
 
-The data we have is ready to use for heatmap plotting purposes, but since the data also contains previously samples sequences, comparing those sequences amongst themselves would be a distraction.  We are interested in those samples, but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
+The data we have is ready to use for heatmap plotting purposes, but since the data also contains previously samples sequences, comparing those sequences amongst themselves would be a distraction.  We are interested in those samples but only compare to the current batch of samples analysed.  The figures below should explain this a bit better. 
 
 
 ![Lots of distracting data](heatmap_full.png)
 
 
 
-From the image above you can see that, typical of a heatmap, it is symmetrical on the diagonal.  We show submitted *vs* retrieved samples in both the horizontal and vertical direction.  Notice also, as annotated as "Distraction", are the previous samples compared amongst themselves.  We are not interested in those sample now as we would already have acted on any issues then.  What we want instead, is a heatmap as depicted in the image below.
+From the image above you can see that, typical of a heatmap, it is symmetrical on the diagonal.  We show submitted *vs* retrieved samples in both the horizontal and vertical direction.  Notice also, as annotated as "Distraction", are the previous samples compared amongst themselves.  We are not interested in those samples now as we would already have acted on any issues then.  What we want instead, is a heatmap as depicted in the image below.
 
 
 
@@ -137,10 +137,11 @@ nodelabels("This one", 9, frame = "r", bg = "red", adj = c(-8.2,-46))
 ```
 
 
-We have highlighted a node with a red block, whith the text "This one" which we can now discuss.  We have three leaves in this node, KM050043, KM050042, KM050041 and if you would look up these accession numbers at [NCBI](https://www.ncbi.nlm.nih.gov/nuccore/KM050041.1/) you will notice the Title of the paper it is tied to:
+We have highlighted a node with a red block, with the text "This one" which we can now discuss.  We have three leaves in this node, KM050043, KM050042, KM050041 and if you would look up these accession numbers at [NCBI](https://www.ncbi.nlm.nih.gov/nuccore/KM050041.1/) you will notice the Title of the paper it is tied to:
 
 "HIV transmission. Selection bias at the heterosexual HIV-1 transmission bottleneck"
 
+In a nutshell, the authors looked at how quasispecies are transmitted and they found that there exists a selection bias towards more replicative fit viruses.  As we can see in our tree and heatmap, these viral sequences are genetically very similar.  The authors used multiple samples for many of the patients and we will notice this relatedness by doing these kinds of genetic analysis.
 
 
 
