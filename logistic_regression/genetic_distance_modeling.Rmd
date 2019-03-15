@@ -1,7 +1,7 @@
 ---
 title: "Genetic identification"
 author: "Andrie de Vries"
-date: "18 August 2017"
+date: "15 March 2019"
 output: html_document
 ---
 
@@ -90,16 +90,29 @@ pred <- predict(model, newdata, type = "response")
 ```
 
 ```{r predictionplot}
-newdata %>% 
-  ggplot(aes(x = distance, y = pred)) +
-  geom_line() +
+
+plot_sample <- 
+  pt_sample %>% 
+  filter(distance <= 0.05)
+
+plot_inter <- 
+  pt_sample %>% 
+  filter(distance <= 0.05, type == "Inter")
+  
+plot_intra <- 
+  pt_sample %>% 
+  filter(distance <= 0.05, type == "Intra")
+
+ggplot() +
+  geom_point(data = plot_inter, aes(x = distance, y = 0), alpha = 0.01, col = "blue") +
+  geom_point(data = plot_intra, aes(x = distance, y = 1), alpha = 0.01, col = "red") +
+  geom_line(data = newdata, aes(x = distance, y = pred)) +
   geom_text(x = 0.04, y = 0.1, label = "Type = inter") +
   geom_text(x = 0.04, y = 0.9, label = "Type = intra") +
-  ggtitle("Model results") +
-  ylab("Predicted probability")
+  ggtitle("Model results", subtitle = "Predicted probability that class == 'Intra'")
 ```
 
-Logistic regression essentially fits an s-curve that indicates the probability.  In this case, for small distances (lower than  ~0.01) the probability of being the same person (i.e. type is intra) is almost 100%.  For distances greater than 0.03 the probability of being type intra is almost zero (i.e. the model predicts type intra).
+Logistic regression essentially fits an s-curve that indicates the probability.  In this case, for small distances (lower than  ~0.01) the probability of being the same person (i.e. type is intra) is almost 100%.  For distances greater than 0.03 the probability of being type intra is almost zero (i.e. the model predicts type inter).
 
 The model puts the distance threshold at approximately 0.025.
 
